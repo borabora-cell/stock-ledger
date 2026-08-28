@@ -3,6 +3,7 @@ import multer from 'multer';
 import { db } from '../lib/db.js';
 import { requireAuth } from '../lib/auth.js';
 import { matchSell, summarizeMatches, remainingAfter } from '../lib/match.js';
+import { parseTossScreenshot } from '../lib/ocr.js';
 import { round2, todayKST } from '../lib/util.js';
 
 const router = express.Router();
@@ -172,6 +173,130 @@ router.get('/screenshots/:id', async (req, res, next) => {
     res.set('Content-Type', row.mime);
     res.set('Cache-Control', 'private, max-age=31536000, immutable');
     res.send(Buffer.from(row.data, 'base64'));
+  } catch (e) { next(e); }
+});
+
+/* ─────────── 캡처에서 거래 읽기 ─────────── */
+
+/**
+ * 캡처 한 장을 읽어 거래 목록을 돌려준다. 저장은 하지 않는다.
+ * 매수·매도가 섞여 있어도 그대로 읽어내고, 사용자가 확인·수정한 뒤 bulk 로 저장한다.
+ */
+router.post('/stocks/:id/parse-screenshot', upload.single('screenshot'), async (req, res, next) => {
+  try {
+    const stockId = Number(req.params.id);
+    const stock = await db.get('SELECT id, name FROM stocks WHERE id = ? AND user_id = ?', stockId, req.user.id);
+    if (!stock) return res.status(404).json({ ok: false, error: '종목을 찾을 수 없습니다.' });
+    if (!req.file) return res.status(400).json({ ok: false, error: '이미지를 선택해 주세요.' });
+
+    const parsed = await parseTossScreenshot(req.file.buffer);
+    if (!parsed.rows.length) {
+      return res.status(422).json({
+        ok: false,
+        error: '거래 내역을 찾지 못했습니다. "주문 내역" 목록이 잘 보이게 다시 찍어 올려주세요.',
+      });
+    }
+
+    // 확인 화면에서 취소할 수도 있으니, 저장은 bulk 단계에서 한다.
+    const screenshotId = await saveScreenshot(req.file);
+
+    res.json({
+      ok: true,
+      screenshotId,
+      stockName: parsed.stockName,
+      nameMismatch: !!(parsed.stockName && parsed.stockName !== stock.name),
+      rows: parsed.rows,
+    });
+  } catch (e) { next(e); }
+});
+
+/**
+ * 확인을 마친 여러 거래를 한 번에 저장한다.
+ * 매도는 그 시점의 보유분과 맞물려야 하므로 날짜가 이른 것부터,
+ * 같은 날이면 매수를 먼저 처리한다.
+ */
+router.post('/stocks/:id/transactions/bulk', async (req, res, next) => {
+  try {
+    const stockId = Number(req.params.id);
+    const stock = await db.get('SELECT id FROM stocks WHERE id = ? AND user_id = ?', stockId, req.user.id);
+    if (!stock) return res.status(404).json({ ok: false, error: '종목을 찾을 수 없습니다.' });
+
+    const input = Array.isArray(req.body?.rows) ? req.body.rows : [];
+    if (!input.length) return res.status(400).json({ ok: false, error: '저장할 거래가 없습니다.' });
+    if (input.length > 50) return res.status(400).json({ ok: false, error: '한 번에 50건까지 저장할 수 있습니다.' });
+
+    let screenshotId = Number(req.body?.screenshotId || 0) || null;
+    if (screenshotId) {
+      const shot = await db.get('SELECT id FROM screenshots WHERE id = ?', screenshotId);
+      if (!shot) screenshotId = null;
+    }
+
+    // 원래 순서를 기억해 둔 채로 처리 순서만 바꾼다 (결과를 화면의 행과 맞추기 위해)
+    const queue = input
+      .map((r, index) => ({ index, raw: r }))
+      .sort((a, b) => {
+        const da = String(a.raw?.date || '');
+        const db_ = String(b.raw?.date || '');
+        if (da !== db_) return da < db_ ? -1 : 1;
+        const ta = a.raw?.type === 'sell' ? 1 : 0;
+        const tb = b.raw?.type === 'sell' ? 1 : 0;
+        return ta - tb || a.index - b.index;
+      });
+
+    const failed = [];
+    let saved = 0;
+
+    for (const { index, raw } of queue) {
+      const type = raw?.type === 'sell' ? 'sell' : 'buy';
+      const date = String(raw?.date || '').slice(0, 10);
+      const quantity = Math.round(Number(raw?.quantity || 0));
+      const unitPrice = round2(Number(raw?.unitPrice || 0));
+
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        failed.push({ index, error: '날짜를 입력해 주세요.' }); continue;
+      }
+      if (quantity <= 0) { failed.push({ index, error: '수량을 확인해 주세요.' }); continue; }
+      if (unitPrice <= 0) { failed.push({ index, error: '단가를 확인해 주세요.' }); continue; }
+
+      const totalAmount = round2(unitPrice * quantity);
+
+      if (type === 'buy') {
+        await db.run(`
+          INSERT INTO transactions (stock_id, type, txn_date, quantity, unit_price, total_amount, screenshot_id)
+          VALUES (?, 'buy', ?, ?, ?, ?, ?)
+        `, stockId, date, quantity, unitPrice, totalAmount, screenshotId);
+        saved++;
+        continue;
+      }
+
+      const lots = await getLots(stockId);
+      let matches;
+      try {
+        matches = matchSell(lots, quantity);
+      } catch (e) {
+        if (e.code === 'INSUFFICIENT_QTY') { failed.push({ index, error: e.message }); continue; }
+        throw e;
+      }
+      const sum = summarizeMatches(matches, unitPrice);
+
+      const r = await db.run(`
+        INSERT INTO transactions (stock_id, type, txn_date, quantity, unit_price, total_amount, screenshot_id, realized_pl, realized_pl_pct)
+        VALUES (?, 'sell', ?, ?, ?, ?, ?, ?, ?)
+      `, stockId, date, quantity, unitPrice, totalAmount, screenshotId,
+        round2(sum.realizedPl), round2(sum.realizedPlPct));
+
+      await db.batch(matches.map((m) => ({
+        sql: `INSERT INTO sale_matches (sell_txn_id, buy_txn_id, matched_qty, cost_unit_price, proceeds_unit_price, realized_pl)
+              VALUES (?, ?, ?, ?, ?, ?)`,
+        args: [r.lastInsertRowid, m.lotId, m.qty, m.unitPrice, unitPrice, round2(m.qty * (unitPrice - m.unitPrice))],
+      })));
+      saved++;
+    }
+
+    // 한 건도 못 붙였으면 캡처만 남으므로 지운다
+    if (!saved && screenshotId) await db.run('DELETE FROM screenshots WHERE id = ?', screenshotId);
+
+    res.json({ ok: true, saved, failed });
   } catch (e) { next(e); }
 });
 

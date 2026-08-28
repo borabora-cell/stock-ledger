@@ -10,6 +10,40 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/app.css">
+<style>
+  .mode-tabs { display: flex; gap: 8px; margin-bottom: 18px; }
+  .mode-tabs .opt { flex: 1; text-align: center; padding: 11px; border-radius: 12px; font-size: 13.5px; font-weight: 700; border: 1px solid var(--border); color: var(--ink-muted); background: var(--surface); }
+  .mode-tabs .opt.on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+
+  .scan-state { text-align: center; padding: 26px 16px; }
+  .scan-state .spin { width: 34px; height: 34px; border-radius: 50%; border: 3px solid var(--border); border-top-color: var(--accent); margin: 0 auto 12px; animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .scan-state .spin { animation-duration: 3s; } }
+  .scan-state .t { font-weight: 700; font-size: 14px; }
+  .scan-state .d { font-size: 12px; color: var(--ink-faint); margin-top: 4px; line-height: 1.6; }
+
+  .found-head { display: flex; align-items: baseline; justify-content: space-between; margin: 4px 0 10px; }
+  .found-head .t { font-weight: 800; font-size: 15px; }
+  .found-head .n { font-size: 12px; color: var(--ink-faint); }
+
+  .warn-note { background: var(--gold-soft); color: var(--gold); font-size: 12px; font-weight: 600; padding: 10px 12px; border-radius: 12px; margin-bottom: 12px; line-height: 1.5; }
+
+  .row-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 12px; margin-bottom: 10px; }
+  .row-card.bad { border-color: var(--gain); }
+  .row-top { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .row-top .seg2 { display: flex; background: var(--surface-2); border-radius: 9px; padding: 2px; }
+  .row-top .seg2 button { padding: 6px 12px; border-radius: 7px; font-size: 12px; font-weight: 700; color: var(--ink-muted); }
+  .row-top .seg2 button.on[data-t="buy"] { background: var(--loss); color: #fff; }
+  .row-top .seg2 button.on[data-t="sell"] { background: var(--gain); color: #fff; }
+  .row-top input.d { flex: 1; min-width: 0; padding: 7px 9px; border-radius: 9px; border: 1px solid var(--border); background: var(--bg); font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; font-weight: 600; }
+  .row-top .rm { color: var(--ink-faint); font-size: 17px; padding: 0 2px; flex: none; }
+
+  .row-grid { display: grid; grid-template-columns: 1fr 1.4fr; gap: 8px; }
+  .row-grid .cell label { display: block; font-size: 10.5px; font-weight: 700; color: var(--ink-faint); margin-bottom: 4px; }
+  .row-grid input { width: 100%; padding: 9px 10px; border-radius: 9px; border: 1px solid var(--border); background: var(--bg); font-family: 'IBM Plex Mono', monospace; font-size: 13.5px; font-weight: 600; text-align: right; }
+  .row-sum { text-align: right; font-size: 11.5px; color: var(--ink-muted); margin-top: 7px; font-family: 'IBM Plex Mono', monospace; }
+  .row-err { font-size: 11.5px; color: var(--gain); font-weight: 600; margin-top: 7px; }
+</style>
 </head>
 <body>
 <div class="page">
@@ -18,40 +52,68 @@
     <div class="ttl">거래 추가<small id="stock-sub"></small></div>
   </div>
 
-  <div class="seg" id="seg">
-    <button class="opt on buy" data-type="buy">매수</button>
-    <button class="opt" data-type="sell">매도</button>
+  <div class="mode-tabs" id="mode-tabs">
+    <button class="opt on" data-mode="photo">📸 캡처로 등록</button>
+    <button class="opt" data-mode="manual">✍️ 직접 입력</button>
   </div>
 
-  <label class="upload-zone" id="upload-zone">
-    <input type="file" id="screenshot" accept="image/*">
-    <div class="ic">📸</div>
-    <div class="t" id="upload-t">토스 캡처 올리기</div>
-    <div class="d">거래 화면 스크린샷을 첨부하면 기록과 함께 보관돼요</div>
-    <img class="preview hidden" id="preview">
-  </label>
+  <!-- ─── 캡처로 등록 ─── -->
+  <section id="photo-mode">
+    <label class="upload-zone" id="upload-zone">
+      <input type="file" id="screenshot" accept="image/*">
+      <div class="ic">📸</div>
+      <div class="t">토스 "주문 내역" 캡처 선택</div>
+      <div class="d">매수·매도가 섞인 목록 그대로 올리면<br>거래를 자동으로 읽어 채워드려요</div>
+    </label>
 
-  <div class="divider-or">또는 직접 입력</div>
+    <div class="scan-state hidden" id="scanning">
+      <div class="spin"></div>
+      <div class="t">캡처를 읽는 중이에요</div>
+      <div class="d" id="scan-note">10초쯤 걸릴 수 있어요</div>
+    </div>
 
-  <div class="field">
-    <label>거래일</label>
-    <input type="date" id="f-date">
-  </div>
-  <div class="field">
-    <label>매입 단가 (원 / 주)</label>
-    <input type="number" id="f-price" inputmode="numeric" placeholder="예: 72300">
-  </div>
-  <div class="field">
-    <label>수량 (주)</label>
-    <input type="number" id="f-qty" inputmode="numeric" placeholder="예: 5">
-  </div>
+    <div class="hidden" id="found">
+      <div class="warn-note hidden" id="name-warn"></div>
+      <div class="found-head">
+        <div class="t">읽어온 거래</div>
+        <div class="n" id="found-count"></div>
+      </div>
+      <div class="warn-note" style="background:var(--accent-soft);color:var(--accent)">
+        저장 전에 숫자를 확인해 주세요. 잘못 읽힌 값이 있으면 바로 고칠 수 있어요.
+      </div>
+      <div id="rows"></div>
+      <button class="btn ghost block" id="btn-add-row" style="margin-bottom:12px">+ 거래 직접 추가</button>
+      <div class="btn-row">
+        <button class="btn ghost" id="btn-rescan">다른 사진</button>
+        <button class="btn primary" id="btn-save-all">모두 저장</button>
+      </div>
+    </div>
+  </section>
 
-  <div class="total-preview">
-    <div class="lbl" id="total-lbl">총 매입금액</div>
-    <div class="v mono" id="total-v">0원</div>
-  </div>
-
-  <button class="btn primary block" id="btn-save">저장하기</button>
+  <!-- ─── 직접 입력 ─── -->
+  <section id="manual-mode" class="hidden">
+    <div class="seg" id="seg">
+      <button class="opt on buy" data-type="buy">매수</button>
+      <button class="opt" data-type="sell">매도</button>
+    </div>
+    <div class="field">
+      <label>거래일</label>
+      <input type="date" id="f-date">
+    </div>
+    <div class="field">
+      <label id="price-label">매입 단가 (원 / 주)</label>
+      <input type="number" id="f-price" inputmode="numeric" placeholder="예: 72300">
+    </div>
+    <div class="field">
+      <label>수량 (주)</label>
+      <input type="number" id="f-qty" inputmode="numeric" placeholder="예: 5">
+    </div>
+    <div class="total-preview">
+      <div class="lbl" id="total-lbl">총 매입금액</div>
+      <div class="v mono" id="total-v">0원</div>
+    </div>
+    <button class="btn primary block" id="btn-save">저장하기</button>
+  </section>
 </div>
 
 <div id="toast-area"></div>

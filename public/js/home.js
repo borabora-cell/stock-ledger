@@ -12,6 +12,14 @@
     newName: qs('#new-name'),
     modalCancel: qs('#modal-cancel'),
     modalSave: qs('#modal-save'),
+    whoName: qs('#who-name'),
+    btnPw: qs('#btn-pw'),
+    btnLogout: qs('#btn-logout'),
+    pwModal: qs('#pw-modal'),
+    pwCurrent: qs('#pw-current'),
+    pwNext: qs('#pw-next'),
+    pwCancel: qs('#pw-cancel'),
+    pwSave: qs('#pw-save'),
   };
 
   function badge(name) {
@@ -55,12 +63,43 @@
 
   async function load() {
     try {
+      const me = await api('/auth/me');
+      el.whoName.textContent = me.user.username;
       const data = await api('/stocks');
       render(data);
     } catch (e) {
       toast(e.message);
     }
   }
+
+  /* ─── 계정 ─── */
+
+  el.btnLogout.addEventListener('click', () => {
+    if (confirm('로그아웃할까요?')) logout();
+  });
+
+  el.btnPw.addEventListener('click', () => {
+    el.pwCurrent.value = '';
+    el.pwNext.value = '';
+    el.pwModal.classList.remove('hidden');
+  });
+  const closePw = () => el.pwModal.classList.add('hidden');
+  el.pwCancel.addEventListener('click', closePw);
+  el.pwModal.addEventListener('click', (e) => { if (e.target === el.pwModal) closePw(); });
+
+  el.pwSave.addEventListener('click', async () => {
+    const current = el.pwCurrent.value;
+    const next = el.pwNext.value;
+    if (!current || !next) return toast('비밀번호를 모두 입력해 주세요.');
+    if (next.length < 8) return toast('새 비밀번호는 8자 이상으로 만들어 주세요.');
+    try {
+      await api('/auth/password', { method: 'POST', body: { current, next } });
+      closePw();
+      toast('비밀번호를 변경했습니다.');
+    } catch (e) {
+      toast(e.message);
+    }
+  });
 
   function openModal() {
     el.newName.value = '';

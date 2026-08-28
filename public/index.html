@@ -11,16 +11,29 @@
 <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&family=Noto+Sans+KR:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/app.css">
 <style>
-  .top { padding: 6px 0 4px; }
+  .top { padding: 6px 0 4px; display: flex; align-items: flex-start; gap: 10px; }
   .top h1 { font-family:'Gowun Batang',serif; font-size: 24px; margin: 0; letter-spacing: -.01em; }
   .top .sub { color: var(--ink-muted); font-size: 12.5px; margin-top: 3px; }
+  .top .who { margin-left: auto; text-align: right; flex: none; padding-top: 4px; }
+  .top .who .nm { font-size: 12.5px; font-weight: 700; }
+  .top .who .acts { margin-top: 3px; display: flex; gap: 8px; justify-content: flex-end; }
+  .top .who .acts button { font-size: 11.5px; color: var(--ink-faint); text-decoration: underline; }
 </style>
 </head>
 <body>
 <div class="page">
   <div class="top">
-    <h1>주식가계부</h1>
-    <div class="sub" id="today-label"></div>
+    <div>
+      <h1>주식가계부</h1>
+      <div class="sub" id="today-label"></div>
+    </div>
+    <div class="who">
+      <div class="nm" id="who-name">…</div>
+      <div class="acts">
+        <button id="btn-pw">비밀번호</button>
+        <button id="btn-logout">로그아웃</button>
+      </div>
+    </div>
   </div>
 
   <div class="totals-card">
@@ -49,6 +62,24 @@
     <div class="btn-row">
       <button class="btn ghost" id="modal-cancel">취소</button>
       <button class="btn primary" id="modal-save">추가</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop hidden" id="pw-modal">
+  <div class="modal-sheet">
+    <h3>비밀번호 변경</h3>
+    <div class="field">
+      <label>현재 비밀번호</label>
+      <input type="password" id="pw-current" autocomplete="current-password">
+    </div>
+    <div class="field">
+      <label>새 비밀번호</label>
+      <input type="password" id="pw-next" autocomplete="new-password" placeholder="8자 이상">
+    </div>
+    <div class="btn-row">
+      <button class="btn ghost" id="pw-cancel">취소</button>
+      <button class="btn primary" id="pw-save">변경</button>
     </div>
   </div>
 </div>

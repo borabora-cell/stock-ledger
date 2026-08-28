@@ -1,10 +1,14 @@
 import express from 'express';
 import multer from 'multer';
 import { db } from '../lib/db.js';
+import { requireAuth } from '../lib/auth.js';
 import { matchSell, summarizeMatches, remainingAfter } from '../lib/match.js';
 import { round2, todayKST } from '../lib/util.js';
 
 const router = express.Router();
+
+// 이 라우터의 모든 경로는 로그인이 필요하다
+router.use(requireAuth);
 
 // 캡처는 파일이 아니라 DB 에 담는다 → 서버리스(읽기 전용 파일시스템)에서도 동작
 const upload = multer({
@@ -44,7 +48,10 @@ async function getLots(stockId) {
 
 router.get('/stocks', async (req, res, next) => {
   try {
-    const stocks = await db.all('SELECT id, name, created_at FROM stocks ORDER BY id DESC');
+    const stocks = await db.all(
+      'SELECT id, name, created_at FROM stocks WHERE user_id = ? ORDER BY id DESC',
+      req.user.id
+    );
     const out = [];
     for (const s of stocks) {
       const lots = await getLots(s.id);
@@ -70,14 +77,16 @@ router.post('/stocks', async (req, res, next) => {
   try {
     const name = String(req.body?.name || '').trim().slice(0, 40);
     if (!name) return res.status(400).json({ ok: false, error: '종목명을 입력해 주세요.' });
-    const r = await db.run('INSERT INTO stocks (name) VALUES (?)', name);
+    const r = await db.run('INSERT INTO stocks (user_id, name) VALUES (?, ?)', req.user.id, name);
     res.json({ ok: true, id: r.lastInsertRowid, name });
   } catch (e) { next(e); }
 });
 
 router.delete('/stocks/:id', async (req, res, next) => {
   try {
-    await db.run('DELETE FROM stocks WHERE id = ?', Number(req.params.id));
+    const r = await db.run('DELETE FROM stocks WHERE id = ? AND user_id = ?',
+      Number(req.params.id), req.user.id);
+    if (!r.changes) return res.status(404).json({ ok: false, error: '종목을 찾을 수 없습니다.' });
     res.json({ ok: true });
   } catch (e) { next(e); }
 });
@@ -87,7 +96,7 @@ router.delete('/stocks/:id', async (req, res, next) => {
 router.get('/stocks/:id', async (req, res, next) => {
   try {
     const stockId = Number(req.params.id);
-    const stock = await db.get('SELECT id, name FROM stocks WHERE id = ?', stockId);
+    const stock = await db.get('SELECT id, name FROM stocks WHERE id = ? AND user_id = ?', stockId, req.user.id);
     if (!stock) return res.status(404).json({ ok: false, error: '종목을 찾을 수 없습니다.' });
 
     const lots = await getLots(stockId);
@@ -152,7 +161,13 @@ router.get('/stocks/:id', async (req, res, next) => {
 
 router.get('/screenshots/:id', async (req, res, next) => {
   try {
-    const row = await db.get('SELECT mime, data FROM screenshots WHERE id = ?', Number(req.params.id));
+    const row = await db.get(`
+      SELECT sc.mime, sc.data
+        FROM screenshots sc
+        JOIN transactions t ON t.screenshot_id = sc.id
+        JOIN stocks st ON st.id = t.stock_id
+       WHERE sc.id = ? AND st.user_id = ?
+    `, Number(req.params.id), req.user.id);
     if (!row) return res.status(404).json({ ok: false, error: '이미지를 찾을 수 없습니다.' });
     res.set('Content-Type', row.mime);
     res.set('Cache-Control', 'private, max-age=31536000, immutable');
@@ -165,7 +180,7 @@ router.get('/screenshots/:id', async (req, res, next) => {
 router.post('/stocks/:id/transactions', upload.single('screenshot'), async (req, res, next) => {
   try {
     const stockId = Number(req.params.id);
-    const stock = await db.get('SELECT id FROM stocks WHERE id = ?', stockId);
+    const stock = await db.get('SELECT id FROM stocks WHERE id = ? AND user_id = ?', stockId, req.user.id);
     if (!stock) return res.status(404).json({ ok: false, error: '종목을 찾을 수 없습니다.' });
 
     const type = req.body?.type === 'sell' ? 'sell' : 'buy';
@@ -232,7 +247,11 @@ router.post('/stocks/:id/transactions', upload.single('screenshot'), async (req,
 router.delete('/transactions/:id', async (req, res, next) => {
   try {
     const id = Number(req.params.id);
-    const txn = await db.get('SELECT id, type, screenshot_id FROM transactions WHERE id = ?', id);
+    const txn = await db.get(`
+      SELECT t.id, t.type, t.screenshot_id
+        FROM transactions t JOIN stocks st ON st.id = t.stock_id
+       WHERE t.id = ? AND st.user_id = ?
+    `, id, req.user.id);
     if (!txn) return res.status(404).json({ ok: false, error: '거래를 찾을 수 없습니다.' });
 
     if (txn.type === 'buy') {
@@ -255,7 +274,7 @@ router.delete('/transactions/:id', async (req, res, next) => {
 router.post('/stocks/:id/simulate', async (req, res, next) => {
   try {
     const stockId = Number(req.params.id);
-    const stock = await db.get('SELECT id, name FROM stocks WHERE id = ?', stockId);
+    const stock = await db.get('SELECT id, name FROM stocks WHERE id = ? AND user_id = ?', stockId, req.user.id);
     if (!stock) return res.status(404).json({ ok: false, error: '종목을 찾을 수 없습니다.' });
 
     const quantity = Math.round(Number(req.body?.quantity || 0));

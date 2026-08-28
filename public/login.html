@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="theme-color" content="#0FA37F">
+<title>로그인 | 주식가계부</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📒</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&family=Noto+Sans+KR:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/app.css">
+<style>
+  .page { justify-content: center; padding-top: 40px; }
+  .brand { text-align: center; margin-bottom: 26px; }
+  .brand .ic { font-size: 40px; }
+  .brand h1 { font-family:'Gowun Batang',serif; font-size: 26px; margin: 8px 0 4px; }
+  .brand p { color: var(--ink-muted); font-size: 13px; margin: 0; line-height: 1.6; }
+  .auth-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
+  .field input { font-family: 'Noto Sans KR', sans-serif; font-weight: 500; }
+  .hint { font-size: 11.5px; color: var(--ink-faint); margin-top: 6px; line-height: 1.5; }
+  .switch { text-align: center; margin-top: 16px; font-size: 13px; color: var(--ink-muted); }
+  .switch button { color: var(--accent); font-weight: 700; text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="brand">
+    <div class="ic">📒</div>
+    <h1>주식가계부</h1>
+    <p id="brand-sub">매입가별로 손익을 계산하는 내 주식 장부</p>
+  </div>
+
+  <div class="auth-card">
+    <div class="seg" id="tabs">
+      <button class="opt on buy" data-tab="login">로그인</button>
+      <button class="opt" data-tab="register">회원가입</button>
+    </div>
+
+    <div class="field">
+      <label>아이디</label>
+      <input type="text" id="f-username" autocomplete="username" placeholder="영문·숫자 3~20자" autocapitalize="none" spellcheck="false">
+    </div>
+    <div class="field">
+      <label>비밀번호</label>
+      <input type="password" id="f-password" autocomplete="current-password" placeholder="비밀번호">
+      <div class="hint hidden" id="pw-hint">8자 이상으로 만들어 주세요.</div>
+    </div>
+    <div class="field hidden" id="code-field">
+      <label>가입 코드</label>
+      <input type="text" id="f-code" placeholder="관리자에게 받은 코드" autocapitalize="none" spellcheck="false">
+    </div>
+
+    <button class="btn primary block" id="btn-submit">로그인</button>
+    <div class="switch" id="switch-note"></div>
+  </div>
+</div>
+
+<div id="toast-area"></div>
+<script src="/js/common.js"></script>
+<script src="/js/login.js"></script>
+</body>
+</html>

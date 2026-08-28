@@ -2,11 +2,13 @@ import express from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { NEEDS_SETUP, ready } from './lib/db.js';
+import authRouter from './routes/auth.js';
 import apiRouter from './routes/api.js';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 
 const app = express();
+app.set('trust proxy', 1); // 프록시(Vercel 등) 뒤에서 실제 접속 IP·프로토콜을 읽기 위해
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 
@@ -27,7 +29,8 @@ app.use(async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-app.use('/api', apiRouter);
+app.use('/api', authRouter);   // 로그인·가입 (인증 불필요)
+app.use('/api', apiRouter);    // 나머지 전부 로그인 필요
 app.use(express.static(path.join(ROOT, 'public')));
 
 app.use((req, res) => res.status(404).json({ ok: false, error: 'Not found' }));

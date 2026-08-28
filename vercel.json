@@ -1,13 +1,17 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "regions": ["icn1"],
-  "functions": {
-    "api/index.js": {
-      "includeFiles": "public/**",
-      "maxDuration": 30
+  "services": {
+    "stock-ledger": {
+      "root": ".",
+      "buildCommand": "npm ci"
     }
   },
   "rewrites": [
-    { "source": "/(.*)", "destination": "/api" }
+    {
+      "source": "/(.*)",
+      "destination": {
+        "type": "service",
+        "service": "stock-ledger"
+      }
+    }
   ]
 }

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="theme-color" content="#0FA37F">
+<title>매도 시뮬레이션 | 주식가계부</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📒</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+<div class="page">
+  <div class="appbar">
+    <a class="back" id="back-link" href="/">‹</a>
+    <div class="ttl">매도 시뮬레이션<small id="stock-sub"></small></div>
+  </div>
+
+  <div class="field">
+    <label>매도 수량 (주)</label>
+    <input type="number" id="f-qty" inputmode="numeric" placeholder="예: 3">
+  </div>
+
+  <div class="sim-toggle" id="mode-toggle">
+    <button class="opt on" data-mode="total">총 매도금액</button>
+    <button class="opt" data-mode="unit">주당 단가</button>
+  </div>
+  <div class="field">
+    <input type="number" id="f-value" inputmode="numeric" placeholder="예: 1800000">
+  </div>
+  <div class="unit" id="convert-note" style="text-align:right;margin:-10px 0 18px;color:var(--ink-faint);font-size:11.5px"></div>
+
+  <button class="btn primary block" id="btn-run">계산하기</button>
+
+  <div id="result-area" class="hidden" style="margin-top:20px">
+    <div class="match-card">
+      <div class="h">매칭 예상 (최저 매입가 우선)</div>
+      <div id="match-list"></div>
+    </div>
+
+    <div class="result-card" id="result-card">
+      <div class="lbl">예상 실현손익</div>
+      <div class="big mono" id="result-pl">0원</div>
+      <div class="pct mono" id="result-pct">0%</div>
+    </div>
+
+    <div class="after-row">
+      <div class="after-cell"><div class="lbl">매도 후 보유</div><div class="v mono" id="after-qty">0주</div></div>
+      <div class="after-cell"><div class="lbl">새 평균매입가</div><div class="v mono" id="after-avg">0원</div></div>
+    </div>
+
+    <div class="rule-note"><b>계산 방식.</b> 잔여 매입건 중 단가가 가장 낮은 건부터 소진해 매도금액과 비교합니다. 실제 저장은 되지 않는 미리보기입니다.</div>
+  </div>
+</div>
+
+<div id="toast-area"></div>
+<script src="/js/common.js"></script>
+<script src="/js/simulate.js"></script>
+</body>
+</html>

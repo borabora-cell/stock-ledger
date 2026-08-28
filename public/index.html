@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="theme-color" content="#0FA37F">
+<title>주식가계부</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📒</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&family=Noto+Sans+KR:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/app.css">
+<style>
+  .top { padding: 6px 0 4px; }
+  .top h1 { font-family:'Gowun Batang',serif; font-size: 24px; margin: 0; letter-spacing: -.01em; }
+  .top .sub { color: var(--ink-muted); font-size: 12.5px; margin-top: 3px; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="top">
+    <h1>주식가계부</h1>
+    <div class="sub" id="today-label"></div>
+  </div>
+
+  <div class="totals-card">
+    <div class="lbl">누적 실현손익</div>
+    <div class="big mono" id="total-pl">0원</div>
+    <div class="totals-row">
+      <div class="cell"><div class="lbl">보유 평가원가</div><div class="v" id="total-cost">0원</div></div>
+      <div class="cell"><div class="lbl">종목 수</div><div class="v" id="total-count">0개</div></div>
+    </div>
+  </div>
+
+  <div class="section-lbl" id="stock-count-lbl">보유 종목</div>
+  <div id="stock-list"></div>
+  <div class="empty hidden" id="empty">아직 등록된 종목이 없어요.<br>오른쪽 아래 + 버튼으로 종목을 추가해 보세요.</div>
+</div>
+
+<button class="fab-add" id="btn-add">+</button>
+
+<div class="modal-backdrop hidden" id="modal">
+  <div class="modal-sheet">
+    <h3>종목 추가</h3>
+    <div class="field">
+      <label>종목명</label>
+      <input type="text" id="new-name" placeholder="예: 삼성전자" style="font-family:'Noto Sans KR',sans-serif;font-weight:500">
+    </div>
+    <div class="btn-row">
+      <button class="btn ghost" id="modal-cancel">취소</button>
+      <button class="btn primary" id="modal-save">추가</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-area"></div>
+<script src="/js/common.js"></script>
+<script src="/js/home.js"></script>
+</body>
+</html>

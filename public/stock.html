@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="theme-color" content="#0FA37F">
+<title>종목 상세 | 주식가계부</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📒</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+<div class="page">
+  <div class="appbar">
+    <a class="back" href="/">‹</a>
+    <div class="ttl" id="stock-name">불러오는 중…<small id="stock-sub"></small></div>
+  </div>
+
+  <div class="summary-card">
+    <div class="summary-row">
+      <div class="cell"><div class="lbl">보유수량</div><div class="v mono" id="s-qty">0주</div></div>
+      <div class="cell" style="text-align:right"><div class="lbl">평균매입가</div><div class="v mono" id="s-avg">0원</div></div>
+    </div>
+    <div class="realized-strip">
+      <div class="lbl">누적 실현손익</div>
+      <div class="val mono" id="s-pl">0원</div>
+    </div>
+  </div>
+
+  <div class="section-lbl">보유 내역 (매입가별)</div>
+  <table class="lots" id="lots-table">
+    <tr><th>매입일</th><th class="num">단가</th><th class="num">잔여/매입</th><th></th></tr>
+  </table>
+  <div class="empty hidden" id="lots-empty">매입 내역이 없어요.</div>
+
+  <div class="section-lbl">거래 내역</div>
+  <div id="txn-list"></div>
+  <div class="empty hidden" id="txn-empty">아직 거래가 없어요.</div>
+
+  <div class="btn-row" style="margin-top:18px">
+    <a class="btn ghost" id="btn-add-link">거래 추가</a>
+    <a class="btn primary" id="btn-sim-link">매도 시뮬레이션</a>
+  </div>
+</div>
+
+<div id="toast-area"></div>
+<script src="/js/common.js"></script>
+<script src="/js/stock.js"></script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "name": "stock-ledger",
+  "version": "1.0.0",
+  "description": "매입가별 매도 매칭으로 실현손익을 계산하는 개인용 주식 장부",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node --no-warnings server.js",
+    "dev": "node --no-warnings --watch server.js"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.17.4",
+    "express": "^4.21.2",
+    "multer": "^2.2.0"
+  }
+}

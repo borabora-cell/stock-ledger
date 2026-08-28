@@ -1,0 +1,585 @@
+<title>주식가계부</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F5FBF8;
+    --surface: #FFFFFF;
+    --surface-2: #E6F5EE;
+    --shell: #E1F1EA;
+    --ink: #142521;
+    --ink-muted: #567A6E;
+    --ink-faint: #8FAFA3;
+    --border: #D3ECE1;
+    --accent: #0FA37F;
+    --accent-ink: #FFFFFF;
+    --accent-soft: #DBF4EA;
+    --gold: #E8873D;
+    --gold-soft: #FDEAD5;
+    --gain: #EF4B45;
+    --gain-soft: #FDE3E1;
+    --loss: #2F86EE;
+    --loss-soft: #DEECFE;
+    --shadow: 0 18px 40px -20px rgba(15, 60, 45, .28);
+    --radius: 20px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0D1B17;
+      --surface: #142C25;
+      --surface-2: #1B3A30;
+      --shell: #0A1512;
+      --ink: #EAFBF3;
+      --ink-muted: #86B3A2;
+      --ink-faint: #5A8677;
+      --border: #24493C;
+      --accent: #2FD9AC;
+      --accent-ink: #072019;
+      --accent-soft: #1C4438;
+      --gold: #F5A85E;
+      --gold-soft: #3D2A15;
+      --gain: #FF6E63;
+      --gain-soft: #3B1D1A;
+      --loss: #5FA3FF;
+      --loss-soft: #16273F;
+      --shadow: 0 18px 40px -20px rgba(0, 0, 0, .6);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0D1B17;
+    --surface: #142C25;
+    --surface-2: #1B3A30;
+    --shell: #0A1512;
+    --ink: #EAFBF3;
+    --ink-muted: #86B3A2;
+    --ink-faint: #5A8677;
+    --border: #24493C;
+    --accent: #2FD9AC;
+    --accent-ink: #072019;
+    --accent-soft: #1C4438;
+    --gold: #F5A85E;
+    --gold-soft: #3D2A15;
+    --gain: #FF6E63;
+    --gain-soft: #3B1D1A;
+    --loss: #5FA3FF;
+    --loss-soft: #16273F;
+    --shadow: 0 18px 40px -20px rgba(0, 0, 0, .6);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { background: var(--bg); }
+  body {
+    margin: 0; color: var(--ink); background: var(--bg);
+    font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .mono { font-family: 'IBM Plex Mono', 'Noto Sans KR', monospace; font-variant-numeric: tabular-nums; }
+
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  /* ---------- Header ---------- */
+  header.page-head { margin-bottom: 34px; }
+  .eyebrow {
+    font-size: 12.5px; font-weight: 700; color: var(--gold); letter-spacing: .08em;
+  }
+  h1 {
+    font-family: 'Gowun Batang', serif; font-weight: 700;
+    font-size: clamp(28px, 4vw, 38px); margin: 6px 0 10px; letter-spacing: -.01em;
+    text-wrap: balance;
+  }
+  .lede { color: var(--ink-muted); font-size: 15px; max-width: 640px; line-height: 1.7; }
+  .lede b { color: var(--ink); font-weight: 700; }
+
+  /* ---------- Assumptions panel ---------- */
+  .assume {
+    margin-top: 24px; border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--surface); overflow: hidden;
+  }
+  .assume-head {
+    padding: 14px 20px; font-weight: 700; font-size: 13.5px; color: var(--ink);
+    background: var(--surface-2); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .assume-head .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--gold); }
+  .assume-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 0;
+  }
+  .assume-item {
+    padding: 16px 20px; border-right: 1px solid var(--border);
+  }
+  .assume-item:last-child { border-right: none; }
+  .assume-item .num {
+    font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--gold); font-weight: 600;
+  }
+  .assume-item .t { font-weight: 700; font-size: 14px; margin: 5px 0 4px; }
+  .assume-item p { margin: 0; font-size: 12.8px; color: var(--ink-muted); line-height: 1.6; }
+
+  /* ---------- Phone gallery ---------- */
+  .gallery-scroll { overflow-x: auto; padding: 8px 4px 28px; margin-top: 36px; }
+  .gallery {
+    display: flex; gap: 26px; width: max-content;
+  }
+  figure.frame { margin: 0; display: flex; flex-direction: column; gap: 12px; }
+  figcaption {
+    display: flex; align-items: baseline; gap: 8px; padding-left: 4px;
+  }
+  figcaption .step {
+    font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--gold); font-weight: 600;
+  }
+  figcaption .title { font-weight: 700; font-size: 15px; }
+  figcaption .sub { font-size: 12px; color: var(--ink-faint); }
+
+  .phone {
+    width: 336px; background: var(--shell); border-radius: 42px; padding: 12px;
+    box-shadow: var(--shadow);
+  }
+  .screen {
+    width: 100%; height: 700px; background: var(--bg); border-radius: 32px;
+    overflow-y: auto; overflow-x: hidden; position: relative; border: 1px solid rgba(0,0,0,.08);
+    scrollbar-width: thin;
+  }
+  .statusbar {
+    position: sticky; top: 0; z-index: 5; display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 22px 4px; font-size: 12px; font-weight: 600; color: var(--ink); background: var(--bg);
+  }
+  .statusbar .icons { display: flex; gap: 4px; align-items: center; color: var(--ink-muted); }
+
+  .sc-pad { padding: 4px 18px 26px; }
+
+  /* app bar */
+  .appbar { display: flex; align-items: center; gap: 10px; padding: 6px 0 16px; }
+  .appbar .back { width: 30px; height: 30px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 14px; color: var(--ink-muted); flex: none; }
+  .appbar .name { font-weight: 800; font-size: 17px; letter-spacing: -.01em; }
+  .appbar .name small { display: block; font-weight: 500; font-size: 11.5px; color: var(--ink-faint); margin-top: 1px; }
+
+  /* portfolio totals */
+  .totals-card {
+    background: linear-gradient(135deg, var(--accent), #17C79B); color: var(--accent-ink); border-radius: 18px; padding: 18px 20px; margin-bottom: 18px;
+  }
+  .totals-card .lbl { font-size: 11.5px; opacity: .8; font-weight: 600; }
+  .totals-card .big { font-family: 'IBM Plex Mono', monospace; font-size: 26px; font-weight: 600; margin-top: 4px; letter-spacing: -.02em; }
+  .totals-row { display: flex; justify-content: space-between; margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.18); }
+  .totals-row .cell .lbl { opacity: .75; }
+  .totals-row .cell .v { font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 14.5px; margin-top: 2px; }
+
+  .section-lbl {
+    font-size: 12px; font-weight: 700; color: var(--ink-faint); letter-spacing: .04em;
+    margin: 20px 0 10px;
+  }
+
+  .stock-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px;
+  }
+  .ticker-badge {
+    width: 40px; height: 40px; border-radius: 12px; background: var(--surface-2); color: var(--ink);
+    display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; flex: none;
+  }
+  .stock-card .info { flex: 1; min-width: 0; }
+  .stock-card .nm { font-weight: 700; font-size: 14.5px; }
+  .stock-card .meta { font-size: 12px; color: var(--ink-muted); margin-top: 2px; }
+  .stock-card .right { text-align: right; }
+  .stock-card .right .v { font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 13.5px; }
+  .pl { font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 11.5px; margin-top: 3px; padding: 1px 7px; border-radius: 999px; display: inline-block; }
+  .pl.gain { color: var(--gain); background: var(--gain-soft); }
+  .pl.loss { color: var(--loss); background: var(--loss-soft); }
+
+  /* stock detail summary */
+  .summary-card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 18px; margin-bottom: 4px; }
+  .summary-row { display: flex; justify-content: space-between; }
+  .summary-row .cell .lbl { font-size: 11.5px; color: var(--ink-faint); font-weight: 600; }
+  .summary-row .cell .v { font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 16px; margin-top: 3px; }
+  .realized-strip {
+    margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .realized-strip .lbl { font-size: 12.5px; color: var(--ink-muted); font-weight: 600; }
+  .realized-strip .val { font-family: 'IBM Plex Mono', monospace; font-weight: 800; font-size: 18px; color: var(--gain); }
+
+  table.lots { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  table.lots th {
+    text-align: left; font-weight: 600; color: var(--ink-faint); font-size: 11px;
+    padding: 0 6px 8px; border-bottom: 1px solid var(--border);
+  }
+  table.lots th.num, table.lots td.num { text-align: right; font-family: 'IBM Plex Mono', monospace; }
+  table.lots td { padding: 10px 6px; border-bottom: 1px solid var(--border); }
+  table.lots tr:last-child td { border-bottom: none; }
+  .tag { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 6px; }
+  .tag.done { background: var(--surface-2); color: var(--ink-faint); }
+  .tag.live { background: var(--gold-soft); color: var(--gold); }
+
+  .txn { display: flex; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--border); align-items: flex-start; }
+  .txn:last-child { border-bottom: none; }
+  .txn .flag { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 12px; flex: none; }
+  .txn .flag.buy { background: var(--loss-soft); color: var(--loss); }
+  .txn .flag.sell { background: var(--gain-soft); color: var(--gain); }
+  .txn .body { flex: 1; min-width: 0; }
+  .txn .line1 { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; }
+  .txn .line1 .amt { font-family: 'IBM Plex Mono', monospace; }
+  .txn .line2 { font-size: 11.5px; color: var(--ink-faint); margin-top: 2px; }
+  .txn .match { font-size: 11px; color: var(--ink-muted); margin-top: 4px; background: var(--surface-2); display: inline-block; padding: 2px 8px; border-radius: 999px; }
+  .txn .shot { margin-top: 6px; width: 30px; height: 30px; border-radius: 7px; background: var(--surface-2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 13px; }
+
+  .fab-row { display: flex; gap: 10px; margin-top: 18px; }
+  .btn { border-radius: 12px; padding: 12px 14px; font-weight: 700; font-size: 13px; text-align: center; flex: 1; }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); }
+  .btn.ghost { background: var(--surface); color: var(--ink); border: 1px solid var(--border); }
+
+  /* add transaction screen */
+  .seg { display: flex; background: var(--surface-2); border-radius: 12px; padding: 3px; margin-bottom: 18px; }
+  .seg .opt { flex: 1; text-align: center; padding: 9px; border-radius: 10px; font-size: 13px; font-weight: 700; color: var(--ink-muted); }
+  .seg .opt.on.buy { background: var(--loss); color: #fff; }
+  .seg .opt.on.sell { background: var(--gain); color: #fff; }
+
+  .upload-zone {
+    border: 1.5px dashed var(--border); border-radius: 16px; padding: 22px 16px; text-align: center;
+    background: var(--surface); margin-bottom: 16px;
+  }
+  .upload-zone .ic { font-size: 22px; }
+  .upload-zone .t { font-weight: 700; font-size: 13.5px; margin-top: 6px; }
+  .upload-zone .d { font-size: 11.5px; color: var(--ink-faint); margin-top: 3px; }
+
+  .divider-or { display: flex; align-items: center; gap: 10px; color: var(--ink-faint); font-size: 11px; font-weight: 700; margin: 4px 0 16px; }
+  .divider-or::before, .divider-or::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 12px; font-weight: 700; color: var(--ink-muted); margin-bottom: 6px; }
+  .field .box {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px;
+    font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 600; display: flex; justify-content: space-between;
+  }
+  .field .box .unit { font-family: 'Noto Sans KR', sans-serif; color: var(--ink-faint); font-weight: 500; font-size: 12.5px; }
+  .field .box.static { color: var(--ink-faint); background: var(--surface-2); }
+
+  .total-preview { background: var(--accent-soft); border-radius: 12px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; margin: 4px 0 20px; }
+  .total-preview .lbl { font-size: 12px; font-weight: 700; color: var(--accent); }
+  .total-preview .v { font-family: 'IBM Plex Mono', monospace; font-weight: 800; font-size: 16px; color: var(--accent); }
+
+  /* simulation screen */
+  .sim-toggle { display: flex; gap: 8px; margin-bottom: 4px; }
+  .sim-toggle .opt { flex: 1; text-align: center; padding: 9px; border-radius: 10px; font-size: 12px; font-weight: 700; border: 1px solid var(--border); color: var(--ink-muted); }
+  .sim-toggle .opt.on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+
+  .convert-note { font-size: 11.5px; color: var(--ink-faint); text-align: right; margin: -12px 0 18px; }
+  .convert-note b { color: var(--ink-muted); font-family: 'IBM Plex Mono', monospace; }
+
+  .match-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin: 6px 0 16px; }
+  .match-card .h { font-size: 12px; font-weight: 700; color: var(--ink-faint); margin-bottom: 10px; }
+  .match-lot { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 12.5px; }
+  .match-lot:last-child { border-bottom: none; }
+  .match-lot .l { color: var(--ink-muted); }
+  .match-lot .r { font-family: 'IBM Plex Mono', monospace; font-weight: 700; }
+  .match-lot .r .qty { color: var(--gold); }
+
+  .result-card {
+    background: linear-gradient(160deg, var(--gain-soft), var(--surface) 70%);
+    border: 1px solid var(--gain); border-radius: 18px; padding: 20px; text-align: center; margin-bottom: 16px;
+  }
+  .result-card .lbl { font-size: 12px; font-weight: 700; color: var(--ink-muted); }
+  .result-card .big { font-family: 'IBM Plex Mono', monospace; font-size: 30px; font-weight: 800; color: var(--gain); margin-top: 6px; letter-spacing: -.02em; }
+  .result-card .pct { font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 700; color: var(--gain); margin-top: 2px; }
+
+  .after-row { display: flex; gap: 10px; }
+  .after-cell { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+  .after-cell .lbl { font-size: 10.5px; color: var(--ink-faint); font-weight: 700; }
+  .after-cell .v { font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 14.5px; margin-top: 3px; }
+
+  .rule-note { font-size: 11px; color: var(--ink-faint); line-height: 1.6; margin-top: 16px; padding: 12px 14px; background: var(--surface-2); border-radius: 12px; }
+  .rule-note b { color: var(--ink-muted); }
+
+  footer.notes { margin-top: 44px; border-top: 1px solid var(--border); padding-top: 20px; color: var(--ink-faint); font-size: 12.5px; line-height: 1.8; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    figure.frame { animation: rise .5s ease both; }
+    figure.frame:nth-child(2) { animation-delay: .05s; }
+    figure.frame:nth-child(3) { animation-delay: .1s; }
+    figure.frame:nth-child(4) { animation-delay: .15s; }
+    @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  }
+
+  @media (max-width: 700px) {
+    .assume-grid { grid-template-columns: 1fr; }
+    .assume-item { border-right: none; border-bottom: 1px solid var(--border); }
+    .assume-item:last-child { border-bottom: none; }
+  }
+</style>
+
+<div class="wrap">
+  <header class="page-head">
+    <div class="eyebrow">화면 설계안 · MOBILE WEB</div>
+    <h1>주식가계부</h1>
+    <p class="lede">
+      매수·매도를 <b>매입 단가별</b>로 기록하고, 매도 시 평균단가가 아니라
+      <b>가장 유리한 매입건부터 매칭</b>해 실현손익을 계산하는 개인용 주식 장부입니다.
+      토스 캡처를 첨부하거나 직접 입력해 기록하고, 매도 전에 결과를 미리 시뮬레이션할 수 있습니다.
+      아래 4개 화면으로 전체 흐름을 먼저 살펴보세요.
+    </p>
+  </header>
+
+  <div class="assume">
+    <div class="assume-head"><span class="dot"></span>확인이 필요한 설계 결정 3가지</div>
+    <div class="assume-grid">
+      <div class="assume-item">
+        <div class="num">01 · 매칭 규칙</div>
+        <div class="t">최저 매입가 우선 매칭</div>
+        <p>매도 시 남아있는 매입건 중 <b>단가가 가장 낮은 건부터</b> 소진합니다. 이익이 나는 건을 최대한 먼저 반영하고, 전부 손실인 상황이면 손실이 가장 작은 건이 먼저 나가 손실을 최소화합니다. 선입선출(날짜순)로 바꿀 수도 있어요.</p>
+      </div>
+      <div class="assume-item">
+        <div class="num">02 · 시뮬레이션 입력</div>
+        <div class="t">총 매도금액 ↔ 주당 단가 겸용</div>
+        <p>"3주를 180만원에" 같은 문장은 총액인지 단가인지 모호해서, 화면4처럼 <b>토글로 둘 다 입력</b> 가능하게 하고 나머지 값은 자동 환산해 보여줍니다.</p>
+      </div>
+      <div class="assume-item">
+        <div class="num">03 · 캡처 업로드</div>
+        <div class="t">기록용 첨부, 자동 인식은 다음 단계</div>
+        <p>1차 버전은 캡처를 <b>증빙 사진</b>으로만 첨부하고 금액·수량은 직접 입력합니다. 캡처에서 숫자를 자동으로 읽어오는 OCR은 이후 확장 여부를 따로 정하면 좋겠습니다.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="gallery-scroll">
+    <div class="gallery">
+
+      <!-- SCREEN 1: PORTFOLIO HOME -->
+      <figure class="frame">
+        <figcaption><span class="step">01</span><span class="title">포트폴리오 홈</span><span class="sub">보유 종목 · 평균가 · 누적 실현손익</span></figcaption>
+        <div class="phone"><div class="screen">
+          <div class="statusbar"><span>9:41</span><span class="icons">●●● 5G 🔋</span></div>
+          <div class="sc-pad">
+            <div style="padding:10px 0 4px">
+              <div style="font-weight:800;font-size:19px">내 주식</div>
+              <div style="font-size:12px;color:var(--ink-faint);margin-top:2px">2026.08.28 기준</div>
+            </div>
+
+            <div class="totals-card">
+              <div class="lbl">누적 실현손익</div>
+              <div class="big">+170,100원</div>
+              <div class="totals-row">
+                <div class="cell"><div class="lbl">총 매입원금</div><div class="v">3,214,000원</div></div>
+                <div class="cell"><div class="lbl">수익률</div><div class="v">+5.3%</div></div>
+              </div>
+            </div>
+
+            <div class="section-lbl">보유 종목 3</div>
+
+            <div class="stock-card">
+              <div class="ticker-badge">삼성</div>
+              <div class="info">
+                <div class="nm">삼성전자</div>
+                <div class="meta">15주 · 평균 71,200원</div>
+              </div>
+              <div class="right">
+                <div class="v">1,068,000원</div>
+                <span class="pl gain">+182,400</span>
+              </div>
+            </div>
+
+            <div class="stock-card">
+              <div class="ticker-badge">카카오</div>
+              <div class="info">
+                <div class="nm">카카오</div>
+                <div class="meta">8주 · 평균 46,750원</div>
+              </div>
+              <div class="right">
+                <div class="v">374,000원</div>
+                <span class="pl loss">-12,300</span>
+              </div>
+            </div>
+
+            <div class="stock-card">
+              <div class="ticker-badge">NAVER</div>
+              <div class="info">
+                <div class="nm">NAVER</div>
+                <div class="meta">3주 · 평균 198,000원</div>
+              </div>
+              <div class="right">
+                <div class="v">594,000원</div>
+                <span class="pl" style="color:var(--ink-faint);background:var(--surface-2)">거래 1건</span>
+              </div>
+            </div>
+
+            <div class="btn primary" style="margin-top:16px">+ 종목 추가</div>
+          </div>
+        </div></div>
+      </figure>
+
+      <!-- SCREEN 2: STOCK DETAIL -->
+      <figure class="frame">
+        <figcaption><span class="step">02</span><span class="title">종목 상세</span><span class="sub">매입가별 잔여수량 · 거래 내역</span></figcaption>
+        <div class="phone"><div class="screen">
+          <div class="statusbar"><span>9:41</span><span class="icons">●●● 5G 🔋</span></div>
+          <div class="sc-pad">
+            <div class="appbar">
+              <div class="back">‹</div>
+              <div class="name">삼성전자<small>KOSPI · 005930</small></div>
+            </div>
+
+            <div class="summary-card">
+              <div class="summary-row">
+                <div class="cell"><div class="lbl">보유수량</div><div class="v">15주</div></div>
+                <div class="cell" style="text-align:right"><div class="lbl">평균매입가</div><div class="v">71,200원</div></div>
+              </div>
+              <div class="realized-strip">
+                <div class="lbl">누적 실현손익</div>
+                <div class="val">+182,400원 <span style="font-size:12px">(+9.8%)</span></div>
+              </div>
+            </div>
+
+            <div class="section-lbl">보유 내역 (매입가별)</div>
+            <table class="lots">
+              <tr><th>매입일</th><th class="num">단가</th><th class="num">잔여/매입</th><th></th></tr>
+              <tr>
+                <td>25.11.04</td><td class="num">68,500</td><td class="num">7 / 10</td>
+                <td><span class="tag live">보유중</span></td>
+              </tr>
+              <tr>
+                <td>26.01.15</td><td class="num">74,900</td><td class="num">8 / 8</td>
+                <td><span class="tag live">보유중</span></td>
+              </tr>
+            </table>
+
+            <div class="section-lbl">거래 내역</div>
+            <div class="txn">
+              <div class="flag sell">매도</div>
+              <div class="body">
+                <div class="line1"><span>2026.02.20</span><span class="amt">228,000원</span></div>
+                <div class="line2">3주 × 76,000원</div>
+                <div class="match">25.11.04 매입분에서 매칭 · +22,500원</div>
+              </div>
+              <div class="shot">🧾</div>
+            </div>
+            <div class="txn">
+              <div class="flag buy">매수</div>
+              <div class="body">
+                <div class="line1"><span>2026.01.15</span><span class="amt">599,200원</span></div>
+                <div class="line2">8주 × 74,900원</div>
+              </div>
+              <div class="shot">🧾</div>
+            </div>
+            <div class="txn">
+              <div class="flag buy">매수</div>
+              <div class="body">
+                <div class="line1"><span>2025.11.04</span><span class="amt">685,000원</span></div>
+                <div class="line2">10주 × 68,500원</div>
+              </div>
+              <div class="shot">🧾</div>
+            </div>
+
+            <div class="fab-row">
+              <div class="btn ghost">거래 추가</div>
+              <div class="btn primary">매도 시뮬레이션</div>
+            </div>
+          </div>
+        </div></div>
+      </figure>
+
+      <!-- SCREEN 3: ADD TRANSACTION -->
+      <figure class="frame">
+        <figcaption><span class="step">03</span><span class="title">거래 추가</span><span class="sub">캡처 첨부 또는 직접 입력</span></figcaption>
+        <div class="phone"><div class="screen">
+          <div class="statusbar"><span>9:41</span><span class="icons">●●● 5G 🔋</span></div>
+          <div class="sc-pad">
+            <div class="appbar">
+              <div class="back">‹</div>
+              <div class="name">거래 추가<small>삼성전자</small></div>
+            </div>
+
+            <div class="seg">
+              <div class="opt on buy">매수</div>
+              <div class="opt">매도</div>
+            </div>
+
+            <div class="upload-zone">
+              <div class="ic">📸</div>
+              <div class="t">토스 캡처 올리기</div>
+              <div class="d">거래 화면 스크린샷을 첨부하면 기록과 함께 보관돼요</div>
+            </div>
+
+            <div class="divider-or">또는 직접 입력</div>
+
+            <div class="field">
+              <label>거래일</label>
+              <div class="box">2026.02.24<span class="unit">📅</span></div>
+            </div>
+            <div class="field">
+              <label>매입 단가</label>
+              <div class="box">72,300<span class="unit">원 / 주</span></div>
+            </div>
+            <div class="field">
+              <label>수량</label>
+              <div class="box">5<span class="unit">주</span></div>
+            </div>
+
+            <div class="total-preview">
+              <div class="lbl">총 매입금액</div>
+              <div class="v">361,500원</div>
+            </div>
+
+            <div class="btn primary">저장하기</div>
+          </div>
+        </div></div>
+      </figure>
+
+      <!-- SCREEN 4: SELL SIMULATION -->
+      <figure class="frame">
+        <figcaption><span class="step">04</span><span class="title">매도 시뮬레이션</span><span class="sub">"3주를 180만원에 팔면?"</span></figcaption>
+        <div class="phone"><div class="screen">
+          <div class="statusbar"><span>9:41</span><span class="icons">●●● 5G 🔋</span></div>
+          <div class="sc-pad">
+            <div class="appbar">
+              <div class="back">‹</div>
+              <div class="name">매도 시뮬레이션<small>삼성전자 · 보유 15주</small></div>
+            </div>
+
+            <div class="field">
+              <label>매도 수량</label>
+              <div class="box">3<span class="unit">주</span></div>
+            </div>
+
+            <div class="sim-toggle">
+              <div class="opt on">총 매도금액</div>
+              <div class="opt">주당 단가</div>
+            </div>
+            <div class="field" style="margin-top:10px">
+              <div class="box">1,800,000<span class="unit">원</span></div>
+            </div>
+            <div class="convert-note">주당 환산 <b>600,000원</b></div>
+
+            <div class="match-card">
+              <div class="h">매칭 예상 (최저 매입가 우선)</div>
+              <div class="match-lot">
+                <span class="l">25.11.04 매입분 · 68,500원</span>
+                <span class="r"><span class="qty">3주</span> 매칭</span>
+              </div>
+              <div class="match-lot">
+                <span class="l">26.01.15 매입분 · 74,900원</span>
+                <span class="r" style="color:var(--ink-faint)">해당 없음</span>
+              </div>
+            </div>
+
+            <div class="result-card">
+              <div class="lbl">예상 실현손익</div>
+              <div class="big">+1,594,500원</div>
+              <div class="pct">+776.1%</div>
+            </div>
+
+            <div class="after-row">
+              <div class="after-cell"><div class="lbl">매도 후 보유</div><div class="v">12주</div></div>
+              <div class="after-cell"><div class="lbl">새 평균매입가</div><div class="v">72,767원</div></div>
+            </div>
+
+            <div class="rule-note">
+              <b>계산 방식.</b> 잔여 매입건 중 단가가 가장 낮은 25.11.04 매입분(68,500원)부터 소진해 매도금액 1,800,000원과 비교합니다. 실제 저장은 되지 않는 미리보기입니다.
+            </div>
+          </div>
+        </div></div>
+      </figure>
+
+    </div>
+  </div>
+
+  <footer class="notes">
+    예시 종목·금액은 화면 구성을 보여주기 위한 가상의 데이터입니다 · 실현손익 색상은 국내 증권 관행에 맞춰 상승/이익은 빨강, 하락/손실은 파랑으로 표시했습니다
+  </footer>
+</div>

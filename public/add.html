@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="theme-color" content="#0FA37F">
+<title>거래 추가 | 주식가계부</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📒</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+<div class="page">
+  <div class="appbar">
+    <a class="back" id="back-link" href="/">‹</a>
+    <div class="ttl">거래 추가<small id="stock-sub"></small></div>
+  </div>
+
+  <div class="seg" id="seg">
+    <button class="opt on buy" data-type="buy">매수</button>
+    <button class="opt" data-type="sell">매도</button>
+  </div>
+
+  <label class="upload-zone" id="upload-zone">
+    <input type="file" id="screenshot" accept="image/*">
+    <div class="ic">📸</div>
+    <div class="t" id="upload-t">토스 캡처 올리기</div>
+    <div class="d">거래 화면 스크린샷을 첨부하면 기록과 함께 보관돼요</div>
+    <img class="preview hidden" id="preview">
+  </label>
+
+  <div class="divider-or">또는 직접 입력</div>
+
+  <div class="field">
+    <label>거래일</label>
+    <input type="date" id="f-date">
+  </div>
+  <div class="field">
+    <label>매입 단가 (원 / 주)</label>
+    <input type="number" id="f-price" inputmode="numeric" placeholder="예: 72300">
+  </div>
+  <div class="field">
+    <label>수량 (주)</label>
+    <input type="number" id="f-qty" inputmode="numeric" placeholder="예: 5">
+  </div>
+
+  <div class="total-preview">
+    <div class="lbl" id="total-lbl">총 매입금액</div>
+    <div class="v mono" id="total-v">0원</div>
+  </div>
+
+  <button class="btn primary block" id="btn-save">저장하기</button>
+</div>
+
+<div id="toast-area"></div>
+<script src="/js/common.js"></script>
+<script src="/js/add.js"></script>
+</body>
+</html>

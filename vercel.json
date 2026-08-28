@@ -2,7 +2,15 @@
   "services": {
     "stock-ledger": {
       "root": ".",
-      "buildCommand": "npm ci"
+      "buildCommand": "npm ci",
+      "entrypoint": "server.js",
+      "functions": {
+        "server.js": {
+          "includeFiles": "node_modules/tesseract.js-core/**",
+          "memory": 2048,
+          "maxDuration": 120
+        }
+      }
     }
   },
   "rewrites": [

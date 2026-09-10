@@ -3,21 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
-<meta name="theme-color" content="#0FA37F">
+<meta name="theme-color" content="#0B95E8">
 <title>주식가계부</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📒</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&family=Noto+Sans+KR:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/static/pretendard-dynamic-subset.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/app.css">
 <style>
-  .top { padding: 6px 0 4px; display: flex; align-items: flex-start; gap: 10px; }
-  .top h1 { font-family:'Gowun Batang',serif; font-size: 24px; margin: 0; letter-spacing: -.01em; }
-  .top .sub { color: var(--ink-muted); font-size: 12.5px; margin-top: 3px; }
-  .top .who { margin-left: auto; text-align: right; flex: none; padding-top: 4px; }
-  .top .who .nm { font-size: 12.5px; font-weight: 700; }
-  .top .who .acts { margin-top: 3px; display: flex; gap: 8px; justify-content: flex-end; }
-  .top .who .acts button { font-size: 11.5px; color: var(--ink-faint); text-decoration: underline; }
+  .top { padding: 12px 0 6px; display: flex; align-items: flex-start; gap: 12px; }
+  .top h1 { font-family:'Gowun Batang',serif; font-size: 30px; margin: 0; letter-spacing: -.02em; line-height: 1.2; }
+  .top .sub { color: var(--ink-muted); font-size: 14px; margin-top: 5px; }
+  .top .who { margin-left: auto; text-align: right; flex: none; padding-top: 5px; }
+  .top .who .nm { font-size: 14.5px; font-weight: 700; }
+  .top .who .acts { margin-top: 4px; display: flex; gap: 10px; justify-content: flex-end; }
+  .top .who .acts button { font-size: 13px; color: var(--ink-muted); text-decoration: underline; }
 </style>
 </head>
 <body>
@@ -57,7 +58,7 @@
     <h3>종목 추가</h3>
     <div class="field">
       <label>종목명</label>
-      <input type="text" id="new-name" placeholder="예: 삼성전자" style="font-family:'Noto Sans KR',sans-serif;font-weight:500">
+      <input type="text" id="new-name" placeholder="예: 삼성전자" style="font-family:var(--font-ui);font-weight:600">
     </div>
     <div class="btn-row">
       <button class="btn ghost" id="modal-cancel">취소</button>

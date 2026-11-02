@@ -1,4 +1,4 @@
-// 비밀번호 찾기: 1) 아이디·번호 → 인증번호 문자  2) 인증번호 확인  3) 새 비밀번호
+// 비밀번호 찾기: 1) 아이디·이메일 → 인증번호 메일  2) 인증번호 확인  3) 새 비밀번호
 (function () {
   const el = {
     steps: qsa('#steps span'),
@@ -6,7 +6,7 @@
     codeStep: qs('#step-code'),
     newStep: qs('#step-new'),
     username: qs('#f-username'),
-    phone: qs('#f-phone'),
+    email: qs('#f-email'),
     send: qs('#btn-send'),
     sentTo: qs('#sent-to'),
     timer: qs('#timer'),
@@ -20,7 +20,7 @@
   };
 
   let username = '';
-  let phone = '';
+  let email = '';
   let token = '';
   let ticker = null;
 
@@ -52,7 +52,7 @@
   async function sendCode(btn) {
     btn.disabled = true;
     try {
-      const r = await api('/auth/reset/request', { method: 'POST', body: { username, phone }, noRedirect: true });
+      const r = await api('/auth/reset/request', { method: 'POST', body: { username, email }, noRedirect: true });
       el.sentTo.textContent = r.sentTo;
       el.devNote.classList.toggle('hidden', !r.devMode);
       el.code.value = '';
@@ -68,9 +68,9 @@
 
   el.send.addEventListener('click', () => {
     username = el.username.value.trim();
-    phone = el.phone.value.trim();
+    email = el.email.value.trim();
     if (!username) return toast('아이디를 입력해 주세요.');
-    if (!phone) return toast('휴대폰 번호를 입력해 주세요.');
+    if (!email) return toast('이메일을 입력해 주세요.');
     sendCode(el.send);
   });
   el.resend.addEventListener('click', () => sendCode(el.resend));
@@ -94,7 +94,7 @@
   }
   el.verify.addEventListener('click', verify);
   el.code.addEventListener('input', () => {
-    // 문자 앱에서 붙여 넣거나 자동 완성되면 6자리가 차는 즉시 확인한다
+    // 메일에서 복사해 붙여 넣거나 자동 완성되면 6자리가 차는 즉시 확인한다
     el.code.value = el.code.value.replace(/\D/g, '').slice(0, 6);
     if (el.code.value.length === 6) verify();
   });
@@ -117,10 +117,10 @@
 
   const onEnter = (input, action) => input.addEventListener('keydown', (e) => { if (e.key === 'Enter') action(); });
   onEnter(el.username, () => el.send.click());
-  onEnter(el.phone, () => el.send.click());
+  onEnter(el.email, () => el.send.click());
   onEnter(el.code, verify);
   onEnter(el.pw2, save);
 
   el.username.value = qparam('u') || '';
-  (el.username.value ? el.phone : el.username).focus();
+  (el.username.value ? el.email : el.username).focus();
 })();

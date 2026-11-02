@@ -7,9 +7,9 @@ import {
   readCookie, setSessionCookie, clearSessionCookie,
   rateLimit, requireAuth, cleanUsername,
 } from '../lib/auth.js';
-import { normalizePhone, maskPhone } from '../lib/sms.js';
+import { normalizeEmail, maskEmail } from '../lib/mail.js';
 
-const PHONE_ERROR = '휴대폰 번호를 확인해 주세요. (예: 010-1234-5678)';
+const EMAIL_ERROR = '이메일 주소를 확인해 주세요. (예: name@naver.com)';
 // 로그인은 살아 있으므로 401 이 아니라 403 (화면은 401 을 받으면 로그인 화면으로 보낸다)
 const WRONG_CURRENT = '현재 비밀번호가 올바르지 않습니다.';
 
@@ -28,7 +28,7 @@ router.get('/auth/me', async (req, res, next) => {
   try {
     const user = await getSessionUser(readCookie(req, SESSION_COOKIE));
     if (!user) return res.status(401).json({ ok: false, error: '로그인이 필요합니다.' });
-    res.json({ ok: true, user: { ...user, phone: maskPhone(user.phone) } });
+    res.json({ ok: true, user: { ...user, email: maskEmail(user.email) } });
   } catch (e) { next(e); }
 });
 
@@ -37,7 +37,7 @@ router.post('/auth/register', rateLimit, async (req, res, next) => {
     const username = cleanUsername(req.body?.username);
     const password = String(req.body?.password || '');
     const code = String(req.body?.code || '').trim();
-    const phone = normalizePhone(req.body?.phone);
+    const email = normalizeEmail(req.body?.email);
 
     if (SIGNUP_CODE && code !== SIGNUP_CODE) {
       return res.status(403).json({ ok: false, error: '가입 코드가 올바르지 않습니다.' });
@@ -48,13 +48,13 @@ router.post('/auth/register', rateLimit, async (req, res, next) => {
     if (password.length < 8) {
       return res.status(400).json({ ok: false, error: '비밀번호는 8자 이상으로 만들어 주세요.' });
     }
-    if (!phone) return res.status(400).json({ ok: false, error: PHONE_ERROR });
+    if (!email) return res.status(400).json({ ok: false, error: EMAIL_ERROR });
 
     const dup = await db.get('SELECT id FROM users WHERE username = ?', username);
     if (dup) return res.status(409).json({ ok: false, error: '이미 사용 중인 아이디입니다.' });
 
-    const r = await db.run('INSERT INTO users (username, password_hash, phone) VALUES (?, ?, ?)',
-      username, hashPassword(password), phone);
+    const r = await db.run('INSERT INTO users (username, password_hash, email) VALUES (?, ?, ?)',
+      username, hashPassword(password), email);
 
     const token = await createSession(r.lastInsertRowid);
     setSessionCookie(res, req, token);
@@ -109,18 +109,18 @@ router.post('/auth/password', rateLimit, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-/** 휴대폰 번호 등록·변경 (비밀번호 찾기 문자를 받을 번호라 현재 비밀번호를 확인한다) */
-router.post('/auth/phone', rateLimit, requireAuth, async (req, res, next) => {
+/** 이메일 등록·변경 (비밀번호 찾기 인증번호를 받을 주소라 현재 비밀번호를 확인한다) */
+router.post('/auth/email', rateLimit, requireAuth, async (req, res, next) => {
   try {
-    const phone = normalizePhone(req.body?.phone);
-    if (!phone) return res.status(400).json({ ok: false, error: PHONE_ERROR });
+    const email = normalizeEmail(req.body?.email);
+    if (!email) return res.status(400).json({ ok: false, error: EMAIL_ERROR });
 
     if (!(await passwordMatches(req.user.id, req.body?.password))) {
       return res.status(403).json({ ok: false, error: WRONG_CURRENT });
     }
 
-    await db.run('UPDATE users SET phone = ? WHERE id = ?', phone, req.user.id);
-    res.json({ ok: true, phone: maskPhone(phone) });
+    await db.run('UPDATE users SET email = ? WHERE id = ?', email, req.user.id);
+    res.json({ ok: true, email: maskEmail(email) });
   } catch (e) { next(e); }
 });
 

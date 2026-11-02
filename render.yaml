@@ -19,10 +19,8 @@ services:
         sync: false
       - key: SIGNUP_CODE
         sync: false
-      # 비밀번호 찾기 문자 (솔라피, 건당 유료)
-      - key: SOLAPI_API_KEY
+      # 비밀번호 찾기 메일 (Gmail 주소 + 앱 비밀번호)
+      - key: SMTP_USER
         sync: false
-      - key: SOLAPI_API_SECRET
-        sync: false
-      - key: SMS_FROM
+      - key: SMTP_PASS
         sync: false

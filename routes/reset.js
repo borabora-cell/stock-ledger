@@ -1,21 +1,22 @@
-// 비밀번호 찾기 — 등록된 휴대폰으로 인증번호 문자 → 확인 → 새 비밀번호
-//   1) POST /auth/reset/request {username, phone}  아이디와 번호가 맞으면 6자리 인증번호 문자
+// 비밀번호 찾기 — 등록된 이메일로 인증번호 메일 → 확인 → 새 비밀번호
+//   1) POST /auth/reset/request {username, email}  아이디와 이메일이 맞으면 6자리 인증번호 메일
 //   2) POST /auth/reset/verify  {username, code}   번호가 맞으면 일회용 토큰
 //   3) POST /auth/reset/confirm {token, password}  비밀번호 변경 → 모든 기기 로그아웃 → 이 기기 로그인
-// 문자는 건당 요금이 나가므로, 등록된 번호로만 보내고 보내는 횟수를 막아 둔다.
+// 남의 메일함에 쏟아붓는 데 쓰이지 않게, 등록된 주소로만 보내고 보내는 횟수를 막아 둔다.
 import crypto from 'node:crypto';
 import express from 'express';
 import { db } from '../lib/db.js';
 import { setPassword, createSession, setSessionCookie, rateLimit, cleanUsername } from '../lib/auth.js';
-import { sms, normalizePhone, maskPhone } from '../lib/sms.js';
+import { mail, normalizeEmail, maskEmail } from '../lib/mail.js';
 
 const CODE_MIN = 10;       // 인증번호 유효 시간(분)
 const TOKEN_MIN = 10;      // 인증 뒤 새 비밀번호를 정할 수 있는 시간(분)
 const RESEND_SEC = 60;     // 다시 받기 간격(초)
 const MAX_ATTEMPTS = 5;    // 인증번호를 넣어 볼 수 있는 횟수
-const PER_USER_DAILY = 5;  // 한 사람이 24시간 동안 받을 수 있는 문자
-// 전체 24시간 상한 — 누구나 가입할 수 있는 주소라면 가입을 여러 번 해 문자를 쏘게 만드는 것을 막는다
-const DAILY_TOTAL = Number(process.env.SMS_DAILY_LIMIT) || 30;
+const PER_USER_DAILY = 5;  // 한 사람이 24시간 동안 받을 수 있는 메일
+// 전체 24시간 상한 — 누구나 가입할 수 있는 주소라면 가입을 여러 번 해 메일을 쏘게 만드는 것을 막는다
+// (Gmail 개인 계정의 하루 한도 약 500명보다 한참 아래)
+const DAILY_TOTAL = Number(process.env.MAIL_DAILY_LIMIT) || 50;
 
 const DAY = 864e5;
 const iso = (offsetMs = 0) => new Date(Date.now() + offsetMs).toISOString();
@@ -32,16 +33,16 @@ const router = express.Router();
 router.post('/auth/reset/request', rateLimit, async (req, res, next) => {
   try {
     const username = cleanUsername(req.body?.username);
-    const phone = normalizePhone(req.body?.phone);
-    if (!username || !phone) return fail(res, 400, '아이디와 휴대폰 번호를 확인해 주세요.');
-    if (sms.mode === null) {
-      return fail(res, 503, '문자 발송이 아직 설정되지 않았습니다. 관리자에게 문의해 주세요.');
+    const email = normalizeEmail(req.body?.email);
+    if (!username || !email) return fail(res, 400, '아이디와 이메일 주소를 확인해 주세요.');
+    if (mail.mode === null) {
+      return fail(res, 503, '메일 발송이 아직 설정되지 않았습니다. 관리자에게 문의해 주세요.');
     }
 
-    const user = await db.get('SELECT id, phone FROM users WHERE username = ?', username);
-    // 아이디가 없는지 번호가 다른지 구분해서 알려주지 않는다
-    if (!user || user.phone !== phone) {
-      return fail(res, 404, '아이디와 휴대폰 번호가 맞는 계정이 없습니다.');
+    const user = await db.get('SELECT id, email FROM users WHERE username = ?', username);
+    // 아이디가 없는지 이메일이 다른지 구분해서 알려주지 않는다
+    if (!user || user.email !== email) {
+      return fail(res, 404, '아이디와 이메일이 맞는 계정이 없습니다.');
     }
 
     await db.run('DELETE FROM password_resets WHERE sent_at < ?', iso(-2 * DAY)); // 지난 기록 정리
@@ -59,7 +60,7 @@ router.post('/auth/reset/request', rateLimit, async (req, res, next) => {
       return fail(res, 429, '오늘은 인증번호를 더 받을 수 없습니다. 내일 다시 해 주세요.');
     }
     if (recent.total >= DAILY_TOTAL) {
-      return fail(res, 429, '오늘 보낼 수 있는 문자를 모두 보냈습니다. 내일 다시 해 주세요.');
+      return fail(res, 429, '오늘 보낼 수 있는 메일을 모두 보냈습니다. 내일 다시 해 주세요.');
     }
 
     const code = String(crypto.randomInt(0, 1e6)).padStart(6, '0');
@@ -67,20 +68,29 @@ router.post('/auth/reset/request', rateLimit, async (req, res, next) => {
       'INSERT INTO password_resets (user_id, code_hash, sent_at, expires_at) VALUES (?, ?, ?, ?)',
       user.id, sha256(code), iso(), iso(CODE_MIN * 60_000));
     try {
-      await sms.send(phone, `[주식가계부] 비밀번호 찾기 인증번호 [${code}]`);
+      await mail.send({
+        to: email,
+        subject: `[주식가계부] 비밀번호 찾기 인증번호 ${code}`,
+        text: [
+          `비밀번호 찾기 인증번호는 ${code} 입니다.`,
+          `${CODE_MIN}분 안에 화면에 넣어 주세요.`,
+          '',
+          '직접 요청하지 않았다면 이 메일은 지우셔도 됩니다. 비밀번호는 바뀌지 않습니다.',
+        ].join('\n'),
+      });
     } catch (e) {
       // 보내지 못한 건은 횟수·대기 시간에 넣지 않는다
       await db.run('DELETE FROM password_resets WHERE id = ?', r.lastInsertRowid);
       console.error(e);
-      return fail(res, 502, '문자를 보내지 못했습니다. 잠시 후 다시 해 주세요.');
+      return fail(res, 502, '메일을 보내지 못했습니다. 잠시 후 다시 해 주세요.');
     }
 
     res.json({
       ok: true,
-      sentTo: maskPhone(phone),
+      sentTo: maskEmail(email),
       expiresInSec: CODE_MIN * 60,
       resendInSec: RESEND_SEC,
-      devMode: sms.mode === 'console', // 로컬: 문자 대신 서버 창에 찍었다
+      devMode: mail.mode === 'console', // 로컬: 메일 대신 서버 창에 찍었다
     });
   } catch (e) { next(e); }
 });

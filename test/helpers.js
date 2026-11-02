@@ -7,7 +7,7 @@ import path from 'node:path';
 export async function startApp(env = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'stock-ledger-test-'));
   for (const k of ['TURSO_DATABASE_URL', 'TURSO_AUTH_TOKEN', 'VERCEL', 'RENDER', 'SIGNUP_CODE',
-    'SOLAPI_API_KEY', 'SOLAPI_API_SECRET', 'SMS_FROM', 'SMS_DAILY_LIMIT']) delete process.env[k];
+    'SMTP_USER', 'SMTP_PASS', 'SMTP_HOST', 'SMTP_PORT', 'MAIL_DAILY_LIMIT']) delete process.env[k];
   Object.assign(process.env, { DATA_DIR: dir, DB_PATH: path.join(dir, 'test.db') }, env);
 
   const { default: app } = await import('../app.js');

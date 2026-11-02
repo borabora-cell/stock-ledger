@@ -20,18 +20,18 @@
     pwNext: qs('#pw-next'),
     pwCancel: qs('#pw-cancel'),
     pwSave: qs('#pw-save'),
-    btnPhone: qs('#btn-phone'),
-    phoneNudge: qs('#phone-nudge'),
-    phoneNudgeBtn: qs('#phone-nudge-btn'),
-    phoneModal: qs('#phone-modal'),
-    phoneNow: qs('#phone-now'),
-    phoneNew: qs('#phone-new'),
-    phonePw: qs('#phone-pw'),
-    phoneCancel: qs('#phone-cancel'),
-    phoneSave: qs('#phone-save'),
+    btnEmail: qs('#btn-email'),
+    emailNudge: qs('#email-nudge'),
+    emailNudgeBtn: qs('#email-nudge-btn'),
+    emailModal: qs('#email-modal'),
+    emailNow: qs('#email-now'),
+    emailNew: qs('#email-new'),
+    emailPw: qs('#email-pw'),
+    emailCancel: qs('#email-cancel'),
+    emailSave: qs('#email-save'),
   };
 
-  let myPhone = null; // 010-****-5678 처럼 가려진 번호, 없으면 null
+  let myEmail = null; // fa****@example.com 처럼 가려진 주소, 없으면 null
 
   function badge(name) {
     return name.length <= 2 ? name : name.slice(0, 2);
@@ -76,7 +76,7 @@
     try {
       const me = await api('/auth/me');
       el.whoName.textContent = me.user.username;
-      showPhone(me.user.phone);
+      showEmail(me.user.email);
       const data = await api('/stocks');
       render(data);
     } catch (e) {
@@ -113,36 +113,36 @@
     }
   });
 
-  function showPhone(masked) {
-    myPhone = masked;
-    el.phoneNudge.classList.toggle('hidden', !!masked);
+  function showEmail(masked) {
+    myEmail = masked;
+    el.emailNudge.classList.toggle('hidden', !!masked);
   }
 
-  function openPhone() {
-    el.phoneNow.textContent = myPhone
-      ? `지금 등록된 번호: ${myPhone}. 비밀번호를 잊었을 때 이 번호로 인증번호 문자를 보냅니다.`
-      : '비밀번호를 잊었을 때 이 번호로 인증번호 문자를 보냅니다.';
-    el.phoneNew.value = '';
-    el.phonePw.value = '';
-    el.phoneModal.classList.remove('hidden');
-    setTimeout(() => el.phoneNew.focus(), 50);
+  function openEmail() {
+    el.emailNow.textContent = myEmail
+      ? `지금 등록된 주소: ${myEmail}. 비밀번호를 잊었을 때 이 주소로 인증번호 메일을 보냅니다.`
+      : '비밀번호를 잊었을 때 이 주소로 인증번호 메일을 보냅니다.';
+    el.emailNew.value = '';
+    el.emailPw.value = '';
+    el.emailModal.classList.remove('hidden');
+    setTimeout(() => el.emailNew.focus(), 50);
   }
-  const closePhone = () => el.phoneModal.classList.add('hidden');
-  el.btnPhone.addEventListener('click', openPhone);
-  el.phoneNudgeBtn.addEventListener('click', openPhone);
-  el.phoneCancel.addEventListener('click', closePhone);
-  el.phoneModal.addEventListener('click', (e) => { if (e.target === el.phoneModal) closePhone(); });
+  const closeEmail = () => el.emailModal.classList.add('hidden');
+  el.btnEmail.addEventListener('click', openEmail);
+  el.emailNudgeBtn.addEventListener('click', openEmail);
+  el.emailCancel.addEventListener('click', closeEmail);
+  el.emailModal.addEventListener('click', (e) => { if (e.target === el.emailModal) closeEmail(); });
 
-  el.phoneSave.addEventListener('click', async () => {
-    const phone = el.phoneNew.value.trim();
-    const password = el.phonePw.value;
-    if (!phone) return toast('휴대폰 번호를 입력해 주세요.');
+  el.emailSave.addEventListener('click', async () => {
+    const email = el.emailNew.value.trim();
+    const password = el.emailPw.value;
+    if (!email) return toast('이메일을 입력해 주세요.');
     if (!password) return toast('현재 비밀번호를 입력해 주세요.');
     try {
-      const r = await api('/auth/phone', { method: 'POST', body: { phone, password } });
-      showPhone(r.phone);
-      closePhone();
-      toast('휴대폰 번호를 저장했습니다.');
+      const r = await api('/auth/email', { method: 'POST', body: { email, password } });
+      showEmail(r.email);
+      closeEmail();
+      toast('이메일을 저장했습니다.');
     } catch (e) {
       toast(e.message);
     }

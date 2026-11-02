@@ -20,7 +20,18 @@
     pwNext: qs('#pw-next'),
     pwCancel: qs('#pw-cancel'),
     pwSave: qs('#pw-save'),
+    btnPhone: qs('#btn-phone'),
+    phoneNudge: qs('#phone-nudge'),
+    phoneNudgeBtn: qs('#phone-nudge-btn'),
+    phoneModal: qs('#phone-modal'),
+    phoneNow: qs('#phone-now'),
+    phoneNew: qs('#phone-new'),
+    phonePw: qs('#phone-pw'),
+    phoneCancel: qs('#phone-cancel'),
+    phoneSave: qs('#phone-save'),
   };
+
+  let myPhone = null; // 010-****-5678 처럼 가려진 번호, 없으면 null
 
   function badge(name) {
     return name.length <= 2 ? name : name.slice(0, 2);
@@ -65,6 +76,7 @@
     try {
       const me = await api('/auth/me');
       el.whoName.textContent = me.user.username;
+      showPhone(me.user.phone);
       const data = await api('/stocks');
       render(data);
     } catch (e) {
@@ -96,6 +108,41 @@
       await api('/auth/password', { method: 'POST', body: { current, next } });
       closePw();
       toast('비밀번호를 변경했습니다.');
+    } catch (e) {
+      toast(e.message);
+    }
+  });
+
+  function showPhone(masked) {
+    myPhone = masked;
+    el.phoneNudge.classList.toggle('hidden', !!masked);
+  }
+
+  function openPhone() {
+    el.phoneNow.textContent = myPhone
+      ? `지금 등록된 번호: ${myPhone}. 비밀번호를 잊었을 때 이 번호로 인증번호 문자를 보냅니다.`
+      : '비밀번호를 잊었을 때 이 번호로 인증번호 문자를 보냅니다.';
+    el.phoneNew.value = '';
+    el.phonePw.value = '';
+    el.phoneModal.classList.remove('hidden');
+    setTimeout(() => el.phoneNew.focus(), 50);
+  }
+  const closePhone = () => el.phoneModal.classList.add('hidden');
+  el.btnPhone.addEventListener('click', openPhone);
+  el.phoneNudgeBtn.addEventListener('click', openPhone);
+  el.phoneCancel.addEventListener('click', closePhone);
+  el.phoneModal.addEventListener('click', (e) => { if (e.target === el.phoneModal) closePhone(); });
+
+  el.phoneSave.addEventListener('click', async () => {
+    const phone = el.phoneNew.value.trim();
+    const password = el.phonePw.value;
+    if (!phone) return toast('휴대폰 번호를 입력해 주세요.');
+    if (!password) return toast('현재 비밀번호를 입력해 주세요.');
+    try {
+      const r = await api('/auth/phone', { method: 'POST', body: { phone, password } });
+      showPhone(r.phone);
+      closePhone();
+      toast('휴대폰 번호를 저장했습니다.');
     } catch (e) {
       toast(e.message);
     }

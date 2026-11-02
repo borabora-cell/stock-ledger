@@ -4,6 +4,8 @@
     username: qs('#f-username'),
     password: qs('#f-password'),
     pwHint: qs('#pw-hint'),
+    phoneField: qs('#phone-field'),
+    phone: qs('#f-phone'),
     codeField: qs('#code-field'),
     code: qs('#f-code'),
     submit: qs('#btn-submit'),
@@ -24,6 +26,7 @@
     el.submit.textContent = tab === 'login' ? '로그인' : '가입하고 시작하기';
     el.password.autocomplete = tab === 'login' ? 'current-password' : 'new-password';
     el.pwHint.classList.toggle('hidden', tab === 'login');
+    el.phoneField.classList.toggle('hidden', tab === 'login');
     el.codeField.classList.toggle('hidden', tab === 'login' || !signupCodeRequired);
     el.switchNote.innerHTML = tab === 'login'
       ? '처음이신가요? <button data-go="register">회원가입</button>'
@@ -46,7 +49,11 @@
     if (!password) return toast('비밀번호를 입력해 주세요.');
 
     const body = { username, password };
-    if (tab === 'register' && signupCodeRequired) body.code = el.code.value.trim();
+    if (tab === 'register') {
+      body.phone = el.phone.value.trim();
+      if (!body.phone) return toast('휴대폰 번호를 입력해 주세요.');
+      if (signupCodeRequired) body.code = el.code.value.trim();
+    }
 
     el.submit.disabled = true;
     try {
@@ -59,7 +66,7 @@
   }
 
   el.submit.addEventListener('click', submit);
-  for (const input of [el.username, el.password, el.code]) {
+  for (const input of [el.username, el.password, el.phone, el.code]) {
     input.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
   }
 

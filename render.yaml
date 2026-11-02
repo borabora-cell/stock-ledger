@@ -12,10 +12,17 @@ services:
     envVars:
       - key: NODE_VERSION
         value: "20"
-      # 아래 세 개는 Render 대시보드에서 직접 입력한다 (sync: false = 저장소에 값을 두지 않음)
+      # 아래 값들은 Render 대시보드에서 직접 입력한다 (sync: false = 저장소에 값을 두지 않음)
       - key: TURSO_DATABASE_URL
         sync: false
       - key: TURSO_AUTH_TOKEN
         sync: false
       - key: SIGNUP_CODE
+        sync: false
+      # 비밀번호 찾기 문자 (솔라피, 건당 유료)
+      - key: SOLAPI_API_KEY
+        sync: false
+      - key: SOLAPI_API_SECRET
+        sync: false
+      - key: SMS_FROM
         sync: false

@@ -45,13 +45,22 @@ test('번호 변경은 현재 비밀번호가 맞아야 한다', async () => {
   await b('/auth/register', { username: 'dad', password: 'password1', phone: '01011112222' });
 
   const wrong = await b('/auth/phone', { password: 'nope-nope', phone: '010-9999-8888' });
-  assert.equal(wrong.status, 401);
+  // 401 은 화면에서 「로그인 풀림」으로 보고 로그인 화면으로 보내 버리므로 403 이어야 한다
+  assert.equal(wrong.status, 403);
   assert.equal((await t.db.get("SELECT phone FROM users WHERE username='dad'")).phone, '01011112222');
 
   const okay = await b('/auth/phone', { password: 'password1', phone: '010-9999-8888' });
   assert.equal(okay.ok, true);
   assert.equal((await t.db.get("SELECT phone FROM users WHERE username='dad'")).phone, '01099998888');
   assert.equal((await b('/auth/me')).user.phone, '010-****-8888');
+});
+
+test('비밀번호 변경에서 현재 비밀번호가 틀리면 403 (로그인 화면으로 튕기지 않게)', async () => {
+  const b = browser(t.base);
+  await b('/auth/register', { username: 'uncle', password: 'password1', phone: '01011112222' });
+  const wrong = await b('/auth/password', { current: 'nope-nope', next: 'password2' });
+  assert.equal(wrong.status, 403);
+  assert.equal((await b('/auth/me')).ok, true); // 로그인은 그대로
 });
 
 test('번호 변경은 로그인해야 한다', async () => {

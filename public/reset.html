@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="theme-color" content="#0B95E8">
+<title>비밀번호 찾기 | 주식가계부</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📒</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/static/pretendard-dynamic-subset.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/app.css">
+<style>
+  .steps { display: flex; gap: 6px; margin-bottom: 18px; }
+  .steps span { flex: 1; height: 5px; border-radius: 99px; background: var(--surface-2); }
+  .steps span.on { background: var(--accent); }
+  .step-title { font-size: 17px; font-weight: 800; margin: 0 0 6px; letter-spacing: -.01em; }
+  .step-desc { font-size: 14px; color: var(--ink-muted); line-height: 1.6; margin: 0 0 18px; }
+  .step-desc b { color: var(--ink); }
+  .auth-card #f-code { font-family: var(--font-mono); font-size: 24px; letter-spacing: .3em; text-align: center; }
+  .timer { font-family: var(--font-mono); font-weight: 700; color: var(--accent); }
+  .timer.over { color: var(--danger); }
+  .resend { display: block; margin: 14px auto 0; font-size: 14.5px; font-weight: 700; color: var(--accent); text-decoration: underline; }
+  .resend:disabled { color: var(--ink-faint); text-decoration: none; }
+  .dev-note { font-size: 13px; line-height: 1.6; background: var(--gold-soft); color: var(--gold); border-radius: 12px; padding: 10px 13px; margin: 0 0 16px; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="page auth-page">
+  <div class="brand">
+    <div class="ic">🔑</div>
+    <h1>비밀번호 찾기</h1>
+    <p>등록한 휴대폰으로 받은 인증번호로 새 비밀번호를 정합니다.</p>
+  </div>
+
+  <div class="auth-card">
+    <div class="steps" id="steps"><span class="on"></span><span></span><span></span></div>
+
+    <!-- 1. 아이디·휴대폰 번호 -->
+    <section id="step-ask">
+      <div class="field">
+        <label>아이디</label>
+        <input type="text" id="f-username" autocomplete="username" autocapitalize="none" spellcheck="false">
+      </div>
+      <div class="field">
+        <label>휴대폰 번호</label>
+        <input type="tel" id="f-phone" inputmode="numeric" autocomplete="tel" placeholder="010-1234-5678">
+        <div class="hint">가입할 때(또는 설정에서) 등록한 번호를 넣어 주세요.</div>
+      </div>
+      <button class="btn primary block" id="btn-send">인증번호 받기</button>
+    </section>
+
+    <!-- 2. 인증번호 -->
+    <section id="step-code" class="hidden">
+      <p class="step-title">인증번호 입력</p>
+      <p class="step-desc"><b id="sent-to"></b> 로 보낸 6자리 숫자를 넣어 주세요.<br>
+        남은 시간 <span class="timer" id="timer">10:00</span></p>
+      <p class="dev-note hidden" id="dev-note">문자 발송이 아직 설정되지 않아, 문자 대신 <b>서버 창</b>에 인증번호를 표시했습니다.</p>
+      <div class="field">
+        <input type="text" id="f-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="······">
+      </div>
+      <button class="btn primary block" id="btn-verify">확인</button>
+      <button class="resend" id="btn-resend" disabled>인증번호 다시 받기</button>
+    </section>
+
+    <!-- 3. 새 비밀번호 -->
+    <section id="step-new" class="hidden">
+      <p class="step-title">새 비밀번호</p>
+      <p class="step-desc">인증되었습니다. 새로 쓸 비밀번호를 정해 주세요.</p>
+      <div class="field">
+        <label>새 비밀번호</label>
+        <input type="password" id="f-pw" autocomplete="new-password" placeholder="8자 이상">
+      </div>
+      <div class="field">
+        <label>새 비밀번호 확인</label>
+        <input type="password" id="f-pw2" autocomplete="new-password" placeholder="한 번 더">
+        <div class="hint">바꾸면 다른 기기에서는 모두 로그아웃됩니다.</div>
+      </div>
+      <button class="btn primary block" id="btn-save">비밀번호 바꾸기</button>
+    </section>
+
+    <div class="switch"><a href="/login.html">로그인 화면으로</a></div>
+  </div>
+</div>
+
+<div id="toast-area"></div>
+<script src="/js/common.js"></script>
+<script src="/js/reset.js"></script>
+</body>
+</html>

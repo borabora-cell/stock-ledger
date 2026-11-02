@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { NEEDS_SETUP, ready } from './lib/db.js';
 import authRouter from './routes/auth.js';
+import resetRouter from './routes/reset.js';
 import apiRouter from './routes/api.js';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
@@ -30,6 +31,7 @@ app.use(async (req, res, next) => {
 });
 
 app.use('/api', authRouter);   // 로그인·가입 (인증 불필요)
+app.use('/api', resetRouter);  // 비밀번호 찾기 (인증 불필요)
 app.use('/api', apiRouter);    // 나머지 전부 로그인 필요
 app.use(express.static(path.join(ROOT, 'public')));
 

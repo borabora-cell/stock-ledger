@@ -9,6 +9,7 @@ const fmtDate = (s) => (s || '').replaceAll('-', '.');
 /**
  * @param {{method?: string, body?: any, noRedirect?: boolean}} opts
  *   noRedirect: 401 이 와도 로그인 화면으로 보내지 않는다 (로그인 화면 자신이 쓴다)
+ * 서버 약속: 401 은 «로그인이 풀렸다»는 뜻으로만 쓴다. 로그인한 채로 비밀번호를 틀린 것은 403.
  */
 async function api(path, opts = {}) {
   const isForm = opts.body instanceof FormData;

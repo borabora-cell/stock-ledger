@@ -11,6 +11,8 @@
     submit: qs('#btn-submit'),
     switchNote: qs('#switch-note'),
     brandSub: qs('#brand-sub'),
+    forgot: qs('#forgot'),
+    forgotLink: qs('#forgot-link'),
   };
 
   let tab = 'login';
@@ -27,6 +29,7 @@
     el.password.autocomplete = tab === 'login' ? 'current-password' : 'new-password';
     el.pwHint.classList.toggle('hidden', tab === 'login');
     el.phoneField.classList.toggle('hidden', tab === 'login');
+    el.forgot.classList.toggle('hidden', tab !== 'login');
     el.codeField.classList.toggle('hidden', tab === 'login' || !signupCodeRequired);
     el.switchNote.innerHTML = tab === 'login'
       ? '처음이신가요? <button data-go="register">회원가입</button>'
@@ -64,6 +67,12 @@
       el.submit.disabled = false;
     }
   }
+
+  // 적어 둔 아이디를 비밀번호 찾기 화면에 넘겨준다
+  el.forgotLink.addEventListener('click', () => {
+    const u = el.username.value.trim();
+    el.forgotLink.href = u ? `/reset.html?u=${encodeURIComponent(u)}` : '/reset.html';
+  });
 
   el.submit.addEventListener('click', submit);
   for (const input of [el.username, el.password, el.phone, el.code]) {
